@@ -69,3 +69,10 @@ services:
     build: ./recommender-ai-service
     ports:
       - "8011:8000"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api-gateway

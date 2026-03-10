@@ -5,8 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - BookStore</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <script src="../js/api.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/api-config.js"></script>
+    <script src="/js/mock-data.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/customer-api.js"></script>
+    <script src="/js/book-api.js"></script>
+    <script src="/js/cart-api.js"></script>
+    <script src="/js/order-api.js"></script>
+    <script src="/js/rating-api.js"></script>
 </head>
 
 <body>
@@ -369,6 +376,21 @@
     </style>
 
     <script>
+        // Local modal helpers (in case utils.js is not loaded for some reason)
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.style.display = 'block';
+            }
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
         async function loadBooks() {
             try {
                 const books = await getAllBooks();

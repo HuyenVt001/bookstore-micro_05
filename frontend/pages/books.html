@@ -5,8 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Books - BookStore</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <script src="../js/api.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/api-config.js"></script>
+    <script src="/js/mock-data.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/customer-api.js"></script>
+    <script src="/js/book-api.js"></script>
+    <script src="/js/cart-api.js"></script>
+    <script src="/js/order-api.js"></script>
+    <script src="/js/rating-api.js"></script>
 </head>
 
 <body>
@@ -101,7 +108,14 @@
                 allBooks = await getAllBooks();
                 displayBooks(allBooks);
             } catch (error) {
-                showAlert('Failed to load books', 'danger');
+                console.error('Failed to load books, using fallback data if available', error);
+                if (typeof MOCK_BOOKS !== 'undefined') {
+                    allBooks = MOCK_BOOKS;
+                    displayBooks(allBooks);
+                    showAlert('Backend unavailable, showing mock books data', 'info');
+                } else {
+                    showAlert('Failed to load books', 'danger');
+                }
             }
         }
 
