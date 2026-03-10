@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders - BookStore</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">📚 BookStore</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="books.html">Books</a></li>
+                <li><a href="cart.html">Cart</a></li>
+                <li><a href="orders.html">Orders</a></li>
+            </ul>
+            <div class="user-section">
+                <span id="user-display">Guest</span>
+                <div class="cart-badge" id="cart-count" style="display: none;">0</div>
+                <button class="btn btn-primary btn-small" id="login-btn"
+                    onclick="window.location.href='register.html'">Login/Register</button>
+                <button class="btn btn-danger btn-small" id="logout-btn" style="display: none;"
+                    onclick="logout()">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <div id="alert-container"></div>
+
+    <div class="container">
+        <div class="section-title">My Orders</div>
+
+        <div id="empty-orders" style="text-align: center; padding: 3rem 1rem;">
+            <p style="font-size: 1.2rem; margin-bottom: 1rem;">No orders yet</p>
+            <p style="color: var(--dark-gray); margin-bottom: 1.5rem;">Start shopping to place your first order</p>
+            <a href="books.html" class="btn btn-primary">Browse Books</a>
+        </div>
+
+        <div id="orders-container" style="display: none;">
+            <div id="orders-list"></div>
+        </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div id="order-detail-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="card-title">Order Details</h2>
+                <button class="modal-close" onclick="closeModal('order-detail-modal')">&times;</button>
+            </div>
+            <div id="modal-body" class="modal-body" style="padding: 2rem;"></div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>About Us</h4>
+                <p>BookStore is your online destination for finding and purchasing books.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <a href="index.html">Home</a>
+                <a href="books.html">Books</a>
+                <a href="cart.html">Cart</a>
+                <a href="orders.html">Orders</a>
+            </div>
+            <div class="footer-section">
+                <h4>Customer Service</h4>
+                <a href="#">Contact Us</a>
+                <a href="#">FAQs</a>
+                <a href="#">Shipping Info</a>
+                <a href="#">Returns</a>
+            </div>
+            <div class="footer-section">
+                <h4>Follow Us</h4>
+                <a href="#">Facebook</a>
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 BookStore. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        async function loadOrders() {
+            const customerId = getCurrentCustomerId();
+            if (!customerId) {
+                showAlert('Please login to view your orders', 'info');
+                document.getElementById('empty-orders').style.display = 'block';
+                return;
+            }
+
+            try {
+                // In a real app, fetch from order service
+                // For demo, we'll create sample orders
+                const orders = [
+                    {
+                        id: 1,
+                        date: '2026-01-15',
+                        status: 'Delivered',
+                        total: 45.99,
+                        items: 3,
+                        tracking: 'TRK001234567'
+                    },
+                    {
+                        id: 2,
+                        date: '2026-01-10',
+                        status: 'Shipped',
+                        total: 32.50,
+                        items: 2,
+                        tracking: 'TRK001234568'
+                    },
+                    {
+                        id: 3,
+                        date: '2026-01-05',
+                        status: 'Processing',
+                        total: 78.25,
+                        items: 5,
+                        tracking: 'TRK001234569'
+                    }
+                ];
+
+                displayOrders(orders);
+            } catch (error) {
+                showAlert('Failed to load orders', 'danger');
+            }
+        }
+
+        function displayOrders(orders) {
+            const empty = document.getElementById('empty-orders');
+            const container = document.getElementById('orders-container');
+            const listDiv = document.getElementById('orders-list');
+
+            if (!orders || orders.length === 0) {
+                empty.style.display = 'block';
+                container.style.display = 'none';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.style.display = 'block';
+            listDiv.innerHTML = '';
+
+            orders.forEach(order => {
+                const statusColor =
+                    order.status === 'Delivered' ? 'var(--success-color)' :
+                        order.status === 'Shipped' ? 'var(--secondary-color)' :
+                            'var(--dark-gray)';
+
+                listDiv.innerHTML += `
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin-bottom: 0.5rem;">Order #${order.id}</h3>
+                                <p style="font-size: 0.9rem; color: var(--dark-gray);">${formatDate(order.date)}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.3rem; font-weight: bold; color: var(--secondary-color);">${formatCurrency(order.total)}</div>
+                                <div style="font-size: 0.9rem; color: white; background-color: ${statusColor}; padding: 0.3rem 0.8rem; border-radius: 4px; display: inline-block; margin-top: 0.5rem;">${order.status}</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--light-gray);">
+                            <p style="font-size: 0.9rem;"><strong>Items:</strong> ${order.items}</p>
+                            <p style="font-size: 0.9rem;"><strong>Tracking:</strong> ${order.tracking}</p>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem;">
+                            <button class="btn btn-primary btn-small" onclick="viewOrderDetail(${order.id})">View Details</button>
+                            <button class="btn btn-secondary btn-small" onclick="trackOrder('${order.tracking}')">Track Shipment</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function viewOrderDetail(orderId) {
+            const modalBody = document.getElementById('modal-body');
+            modalBody.innerHTML = `
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 1rem;">Order #${orderId}</h4>
+                    
+                    <div style="margin-bottom: 1rem; padding: 1rem; background-color: var(--light-gray); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Order Date:</span>
+                            <strong>January 15, 2026</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Status:</span>
+                            <strong style="color: var(--success-color);">Delivered</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Tracking Number:</span>
+                            <strong>TRK001234567</strong>
+                        </div>
+                    </div>
+
+                    <h5 style="margin-bottom: 1rem; margin-top: 1.5rem;">Order Items</h5>
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="padding: 1rem; border: 1px solid var(--light-gray); border-radius: 4px; margin-bottom: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                                <strong>Book #1: "The Great Gatsby"</strong>
+                                <span>${formatCurrency(12.99)}</span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: var(--dark-gray);">Qty: 1</div>
+                        </div>
+
+                        <div style="padding: 1rem; border: 1px solid var(--light-gray); border-radius: 4px; margin-bottom: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                                <strong>Book #2: "1984"</strong>
+                                <span>${formatCurrency(14.99)}</span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: var(--dark-gray);">Qty: 1</div>
+                        </div>
+
+                        <div style="padding: 1rem; border: 1px solid var(--light-gray); border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                                <strong>Book #3: "To Kill a Mockingbird"</strong>
+                                <span>${formatCurrency(11.99)}</span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: var(--dark-gray);">Qty: 1</div>
+                        </div>
+                    </div>
+
+                    <div style="padding: 1rem; background-color: var(--light-gray); border-radius: 8px; margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Subtotal:</span>
+                            <strong>${formatCurrency(39.97)}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Tax (10%):</span>
+                            <strong>${formatCurrency(3.997)}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Shipping:</span>
+                            <strong>${formatCurrency(5.00)}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding-top: 1rem; border-top: 1px solid #ccc; font-size: 1.1rem; font-weight: bold;">
+                            <span>Total:</span>
+                            <strong style="color: var(--secondary-color);">${formatCurrency(45.99)}</strong>
+                        </div>
+                    </div>
+
+                    <h5 style="margin-bottom: 1rem;">Shipping Address</h5>
+                    <div style="padding: 1rem; border: 1px solid var(--light-gray); border-radius: 4px; margin-bottom: 1.5rem;">
+                        <p>John Doe</p>
+                        <p>john@example.com | +1-800-555-0100</p>
+                        <p>123 Main Street, New York, NY 10001</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-primary" onclick="closeModal('order-detail-modal')">Close</button>
+                    <button class="btn btn-secondary" onclick="trackOrder('TRK001234567')">Track Order</button>
+                </div>
+            `;
+            openModal('order-detail-modal');
+        }
+
+        function trackOrder(trackingNumber) {
+            showAlert(`Tracking number: ${trackingNumber} - Your order is out for delivery!`, 'info');
+        }
+
+        function logout() {
+            clearCurrentCustomer();
+            showAlert('Logged out successfully', 'success');
+            setTimeout(() => window.location.href = 'register.html', 1000);
+        }
+
+        loadOrders();
+    </script>
+</body>
+
+</html>

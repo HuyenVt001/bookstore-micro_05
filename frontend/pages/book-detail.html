@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Details - BookStore</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">📚 BookStore</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="books.html">Books</a></li>
+                <li><a href="cart.html">Cart</a></li>
+                <li><a href="orders.html">Orders</a></li>
+            </ul>
+            <div class="user-section">
+                <span id="user-display">Guest</span>
+                <div class="cart-badge" id="cart-count" style="display: none;">0</div>
+                <button class="btn btn-primary btn-small" id="login-btn"
+                    onclick="window.location.href='register.html'">Login/Register</button>
+                <button class="btn btn-danger btn-small" id="logout-btn" style="display: none;"
+                    onclick="logout()">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <div id="alert-container"></div>
+
+    <div class="container">
+        <div style="margin-bottom: 2rem;">
+            <a href="books.html" style="color: var(--secondary-color); text-decoration: none;">← Back to Books</a>
+        </div>
+
+        <div id="book-detail-container"></div>
+
+        <!-- Ratings Section -->
+        <div class="card" style="margin-top: 3rem;">
+            <h3 class="card-title">Customer Reviews</h3>
+
+            <div id="ratings-container" style="margin-bottom: 3rem;">
+                <!-- Ratings will be loaded here -->
+            </div>
+
+            <!-- Submit Rating Form -->
+            <div id="rating-form-container" style="border-top: 1px solid var(--light-gray); padding-top: 2rem;">
+                <h4 style="margin-bottom: 1.5rem;">Write a Review</h4>
+                <form id="rating-form">
+                    <div class="form-group">
+                        <label>Your Rating</label>
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="radio" name="rating" value="5" id="rating-5">
+                                <label for="rating-5" style="margin: 0; cursor: pointer;">⭐⭐⭐⭐⭐ Excellent</label>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="radio" name="rating" value="4" id="rating-4">
+                                <label for="rating-4" style="margin: 0; cursor: pointer;">⭐⭐⭐⭐ Good</label>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="radio" name="rating" value="3" id="rating-3">
+                                <label for="rating-3" style="margin: 0; cursor: pointer;">⭐⭐⭐ Average</label>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="radio" name="rating" value="2" id="rating-2">
+                                <label for="rating-2" style="margin: 0; cursor: pointer;">⭐⭐ Poor</label>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem;">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="radio" name="rating" value="1" id="rating-1">
+                                <label for="rating-1" style="margin: 0; cursor: pointer;">⭐ Terrible</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Your Review (Optional)</label>
+                        <textarea class="form-input" id="review-text" rows="4"
+                            placeholder="Share your thoughts about this book..."></textarea>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" onclick="submitRating()" id="submit-rating-btn">Submit
+                        Review</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>About Us</h4>
+                <p>BookStore is your online destination for finding and purchasing books.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <a href="index.html">Home</a>
+                <a href="books.html">Books</a>
+                <a href="cart.html">Cart</a>
+                <a href="orders.html">Orders</a>
+            </div>
+            <div class="footer-section">
+                <h4>Customer Service</h4>
+                <a href="#">Contact Us</a>
+                <a href="#">FAQs</a>
+                <a href="#">Shipping Info</a>
+                <a href="#">Returns</a>
+            </div>
+            <div class="footer-section">
+                <h4>Follow Us</h4>
+                <a href="#">Facebook</a>
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 BookStore. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        let currentBookId = null;
+
+        function getBookIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('id');
+        }
+
+        async function loadBookDetail() {
+            currentBookId = getBookIdFromUrl();
+            if (!currentBookId) {
+                showAlert('Book not found', 'danger');
+                setTimeout(() => window.location.href = 'books.html', 2000);
+                return;
+            }
+
+            try {
+                const book = await getBook(currentBookId);
+                displayBookDetail(book);
+                loadRatings();
+            } catch (error) {
+                showAlert('Failed to load book details', 'danger');
+            }
+        }
+
+        function displayBookDetail(book) {
+            const container = document.getElementById('book-detail-container');
+            const inStock = book.stock > 0;
+            const stockColor = inStock ? 'var(--success-color)' : 'var(--danger-color)';
+            const stockText = inStock ? `${book.stock} in stock` : 'Out of Stock';
+
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: 300px 1fr; gap: 3rem;">
+                    <div>
+                        <div style="background-color: var(--light-gray); border-radius: 8px; padding: 2rem; text-align: center; margin-bottom: 1.5rem; min-height: 400px; display: flex; align-items: center; justify-content: center;">
+                            <div style="font-size: 5rem;">📕</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h1 style="margin-bottom: 0.5rem;">${book.title}</h1>
+                        <p style="font-size: 1.1rem; color: var(--dark-gray); margin-bottom: 1.5rem;">by ${book.author}</p>
+
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                            <div style="font-size: 1.8rem; font-weight: bold; color: var(--secondary-color);">${formatCurrency(book.price)}</div>
+                            <div style="background-color: ${stockColor}; color: white; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">${stockText}</div>
+                        </div>
+
+                        <div style="margin-bottom: 2rem;">
+                            <h4 style="margin-bottom: 0.5rem;">Description</h4>
+                            <p style="color: var(--dark-gray);">${book.description || 'A timeless classic that continues to captivate readers with its compelling narrative and memorable characters.'}</p>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                            <div>
+                                <h5 style="margin-bottom: 0.3rem;">ISBN</h5>
+                                <p style="color: var(--dark-gray);">978-${Math.random().toString().slice(2, 12)}</p>
+                            </div>
+                            <div>
+                                <h5 style="margin-bottom: 0.3rem;">Published</h5>
+                                <p style="color: var(--dark-gray);">2024</p>
+                            </div>
+                            <div>
+                                <h5 style="margin-bottom: 0.3rem;">Pages</h5>
+                                <p style="color: var(--dark-gray);">350+</p>
+                            </div>
+                            <div>
+                                <h5 style="margin-bottom: 0.3rem;">Format</h5>
+                                <p style="color: var(--dark-gray);">Hardcover</p>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                            <div>
+                                <label for="quantity" style="display: block; margin-bottom: 0.5rem;">Quantity:</label>
+                                <input type="number" id="quantity" class="form-input" value="1" min="1" max="${book.stock || 1}" style="width: 80px;">
+                            </div>
+                            <div style="display: flex; align-items: flex-end;">
+                                <button class="btn btn-success" onclick="addToCartFromDetail(${book.id}, '${book.title}', ${book.price})" ${inStock ? '' : 'disabled'}>
+                                    🛒 Add to Cart
+                                </button>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-secondary btn-block" onclick="continueShopping()">Continue Shopping</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadRatings() {
+            try {
+                const ratings = await getBookRating(currentBookId);
+                displayRatings(ratings);
+            } catch (error) {
+                console.log('No ratings yet or failed to load');
+            }
+        }
+
+        function displayRatings(ratings) {
+            const container = document.getElementById('ratings-container');
+
+            if (!ratings || ratings.length === 0) {
+                container.innerHTML = '<p style="color: var(--dark-gray);">No reviews yet. Be the first to review this book!</p>';
+                return;
+            }
+
+            let ratingsHtml = '';
+            ratings.forEach(rating => {
+                ratingsHtml += `
+                    <div style="padding: 1rem; border-bottom: 1px solid var(--light-gray); margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <div>
+                                <strong>Customer</strong>
+                                <p style="font-size: 0.9rem; color: var(--dark-gray);">${formatDate(rating.date || new Date().toISOString())}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.1rem; margin-bottom: 0.3rem;">
+                                    ${getRatingStars(rating.rating)}
+                                </div>
+                                <strong>${rating.rating}.0 out of 5</strong>
+                            </div>
+                        </div>
+                        <p style="color: var(--dark-gray);">${rating.comment || 'Great book!'}</p>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = ratingsHtml;
+        }
+
+        function getRatingStars(rating) {
+            let stars = '';
+            for (let i = 0; i < 5; i++) {
+                stars += i < rating ? '⭐' : '☆';
+            }
+            return stars;
+        }
+
+        async function submitRating() {
+            const customerId = getCurrentCustomerId();
+            if (!customerId) {
+                showAlert('Please login to submit a review', 'info');
+                window.location.href = 'register.html';
+                return;
+            }
+
+            const rating = document.querySelector('input[name="rating"]:checked');
+            if (!rating) {
+                showAlert('Please select a rating', 'danger');
+                return;
+            }
+
+            const comment = document.getElementById('review-text').value.trim();
+
+            try {
+                setLoading(true, 'submit-rating-btn');
+                await submitRating(
+                    currentBookId,
+                    customerId,
+                    parseInt(rating.value),
+                    comment
+                );
+
+                setLoading(false, 'submit-rating-btn');
+                showAlert('Review submitted successfully!', 'success');
+
+                // Reset form
+                document.getElementById('rating-form').reset();
+
+                // Reload ratings
+                loadRatings();
+            } catch (error) {
+                setLoading(false, 'submit-rating-btn');
+                showAlert('Failed to submit review', 'danger');
+            }
+        }
+
+        function addToCartFromDetail(bookId, title, price) {
+            const customerId = getCurrentCustomerId();
+            if (!customerId) {
+                showAlert('Please login to add items to cart', 'info');
+                window.location.href = 'register.html';
+                return;
+            }
+
+            const quantity = parseInt(document.getElementById('quantity').value);
+            if (quantity < 1) {
+                showAlert('Please select a valid quantity', 'danger');
+                return;
+            }
+
+            try {
+                addToCart(customerId, bookId, quantity, price);
+                showAlert(`${title} added to cart!`, 'success');
+                updateCartCounter();
+            } catch (error) {
+                showAlert('Failed to add to cart', 'danger');
+            }
+        }
+
+        function continueShopping() {
+            window.location.href = 'books.html';
+        }
+
+        function logout() {
+            clearCurrentCustomer();
+            showAlert('Logged out successfully', 'success');
+            setTimeout(() => window.location.href = 'register.html', 1000);
+        }
+
+        loadBookDetail();
+    </script>
+</body>
+
+</html>

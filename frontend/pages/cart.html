@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - BookStore</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">📚 BookStore</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="books.html">Books</a></li>
+                <li><a href="cart.html">Cart</a></li>
+                <li><a href="orders.html">Orders</a></li>
+            </ul>
+            <div class="user-section">
+                <span id="user-display">Guest</span>
+                <div class="cart-badge" id="cart-count" style="display: none;">0</div>
+                <button class="btn btn-primary btn-small" id="login-btn"
+                    onclick="window.location.href='register.html'">Login/Register</button>
+                <button class="btn btn-danger btn-small" id="logout-btn" style="display: none;"
+                    onclick="logout()">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <div id="alert-container"></div>
+
+    <div class="container">
+        <div class="section-title">Shopping Cart</div>
+
+        <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem; margin-bottom: 2rem;">
+            <div>
+                <div id="empty-cart" style="text-align: center; padding: 2rem;">
+                    <p style="font-size: 1.2rem; margin-bottom: 1rem;">Your cart is empty</p>
+                    <a href="books.html" class="btn btn-primary">Continue Shopping</a>
+                </div>
+
+                <div id="cart-items-container" style="display: none;">
+                    <div id="cart-items"></div>
+                </div>
+            </div>
+
+            <div id="cart-summary" style="display: none;">
+                <div class="card" style="position: sticky; top: 100px;">
+                    <h3 class="card-title">Order Summary</h3>
+
+                    <div style="margin-bottom: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--light-gray);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">$0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Tax (10%):</span>
+                            <span id="tax">$0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Shipping:</span>
+                            <span id="shipping">$5.00</span>
+                        </div>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; margin-bottom: 1.5rem; padding: 1rem 0;">
+                        <span>Total:</span>
+                        <span id="total" style="color: var(--secondary-color);">$0.00</span>
+                    </div>
+
+                    <button class="btn btn-success btn-block" onclick="proceedToCheckout()">Proceed to Checkout</button>
+                    <button class="btn btn-secondary btn-block" onclick="continueShopping()">Continue Shopping</button>
+                    <button class="btn btn-danger btn-block" onclick="clearCartConfirm()">Clear Cart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>About Us</h4>
+                <p>BookStore is your online destination for finding and purchasing books.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <a href="index.html">Home</a>
+                <a href="books.html">Books</a>
+                <a href="cart.html">Cart</a>
+                <a href="orders.html">Orders</a>
+            </div>
+            <div class="footer-section">
+                <h4>Customer Service</h4>
+                <a href="#">Contact Us</a>
+                <a href="#">FAQs</a>
+                <a href="#">Shipping Info</a>
+                <a href="#">Returns</a>
+            </div>
+            <div class="footer-section">
+                <h4>Follow Us</h4>
+                <a href="#">Facebook</a>
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 BookStore. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        async function loadCart() {
+            const customerId = getCurrentCustomerId();
+            if (!customerId) {
+                showAlert('Please login to view your cart', 'info');
+                document.getElementById('empty-cart').style.display = 'block';
+                return;
+            }
+
+            try {
+                const cart = await getCart(customerId);
+                displayCart(cart);
+            } catch (error) {
+                showAlert('Failed to load cart', 'danger');
+            }
+        }
+
+        function displayCart(cart) {
+            const empty = document.getElementById('empty-cart');
+            const container = document.getElementById('cart-items-container');
+            const itemsDiv = document.getElementById('cart-items');
+            const summary = document.getElementById('cart-summary');
+
+            if (!cart.items || cart.items.length === 0) {
+                empty.style.display = 'block';
+                container.style.display = 'none';
+                summary.style.display = 'none';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.style.display = 'block';
+            summary.style.display = 'block';
+
+            itemsDiv.innerHTML = '';
+            cart.items.forEach(item => {
+                itemsDiv.innerHTML += `
+                    <div class="cart-item">
+                        <div class="item-details">
+                            <div>
+                                <h4>Book #${item.book_id}</h4>
+                                <p>${formatCurrency(item.price)} per unit</p>
+                            </div>
+                        </div>
+                        <input type="number" class="quantity-input" value="${item.quantity}" 
+                               onchange="updateQuantity(${item.id}, this.value)" min="1">
+                        <div class="item-total">${formatCurrency(item.quantity * item.price)}</div>
+                        <button class="btn btn-danger btn-small" onclick="removeItem(${item.id})">Remove</button>
+                    </div>
+                `;
+            });
+
+            updateCartSummary(cart);
+        }
+
+        function updateCartSummary(cart) {
+            const subtotal = cart.total_price;
+            const tax = subtotal * 0.1;
+            const shipping = 5;
+            const total = subtotal + tax + shipping;
+
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('tax').textContent = formatCurrency(tax);
+            document.getElementById('shipping').textContent = formatCurrency(shipping);
+            document.getElementById('total').textContent = formatCurrency(total);
+        }
+
+        async function updateQuantity(itemId, newQuantity) {
+            const customerId = getCurrentCustomerId();
+            if (!customerId) return;
+
+            try {
+                const updatedCart = await updateCartItem(customerId, itemId, parseInt(newQuantity));
+                displayCart(updatedCart);
+                showAlert('Cart updated', 'success');
+            } catch (error) {
+                showAlert('Failed to update quantity', 'danger');
+                loadCart();
+            }
+        }
+
+        async function removeItem(itemId) {
+            const customerId = getCurrentCustomerId();
+            if (!customerId) return;
+
+            try {
+                const updatedCart = await removeFromCart(customerId, itemId);
+                displayCart(updatedCart);
+                showAlert('Item removed from cart', 'success');
+            } catch (error) {
+                showAlert('Failed to remove item', 'danger');
+            }
+        }
+
+        async function clearCartConfirm() {
+            if (!confirm('Are you sure you want to clear your cart?')) return;
+
+            const customerId = getCurrentCustomerId();
+            if (!customerId) return;
+
+            try {
+                const updatedCart = await clearCart(customerId);
+                displayCart(updatedCart);
+                showAlert('Cart cleared', 'success');
+            } catch (error) {
+                showAlert('Failed to clear cart', 'danger');
+            }
+        }
+
+        function proceedToCheckout() {
+            window.location.href = 'checkout.html';
+        }
+
+        function continueShopping() {
+            window.location.href = 'books.html';
+        }
+
+        function logout() {
+            clearCurrentCustomer();
+            showAlert('Logged out successfully', 'success');
+            setTimeout(() => window.location.href = 'register.html', 1000);
+        }
+
+        loadCart();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation - BookStore</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">📚 BookStore</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="books.html">Books</a></li>
+                <li><a href="cart.html">Cart</a></li>
+                <li><a href="orders.html">Orders</a></li>
+            </ul>
+            <div class="user-section">
+                <span id="user-display">Guest</span>
+                <div class="cart-badge" id="cart-count" style="display: none;">0</div>
+                <button class="btn btn-primary btn-small" id="login-btn"
+                    onclick="window.location.href='register.html'">Login/Register</button>
+                <button class="btn btn-danger btn-small" id="logout-btn" style="display: none;"
+                    onclick="logout()">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <div id="alert-container"></div>
+
+    <div class="container">
+        <div style="text-align: center; margin: 3rem 0;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+            <h1>Order Confirmed!</h1>
+            <p style="font-size: 1.1rem; color: var(--dark-gray); margin-bottom: 2rem;">Thank you for your purchase</p>
+        </div>
+
+        <div id="order-confirmation-container" style="max-width: 800px; margin: 0 auto;">
+            <!-- Will be populated by JavaScript -->
+        </div>
+
+        <div style="text-align: center; margin: 3rem 0;">
+            <p style="margin-bottom: 1rem;">What would you like to do next?</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="books.html" class="btn btn-primary">Continue Shopping</a>
+                <a href="orders.html" class="btn btn-secondary">View My Orders</a>
+                <a href="index.html" class="btn btn-secondary">Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>About Us</h4>
+                <p>BookStore is your online destination for finding and purchasing books.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <a href="index.html">Home</a>
+                <a href="books.html">Books</a>
+                <a href="cart.html">Cart</a>
+                <a href="orders.html">Orders</a>
+            </div>
+            <div class="footer-section">
+                <h4>Customer Service</h4>
+                <a href="#">Contact Us</a>
+                <a href="#">FAQs</a>
+                <a href="#">Shipping Info</a>
+                <a href="#">Returns</a>
+            </div>
+            <div class="footer-section">
+                <h4>Follow Us</h4>
+                <a href="#">Facebook</a>
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 BookStore. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function getOrderIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('id');
+        }
+
+        function loadOrderConfirmation() {
+            const orderId = getOrderIdFromUrl();
+            if (!orderId) {
+                showAlert('Order not found', 'danger');
+                setTimeout(() => window.location.href = 'index.html', 2000);
+                return;
+            }
+
+            displayOrderConfirmation(orderId);
+        }
+
+        function displayOrderConfirmation(orderId) {
+            const container = document.getElementById('order-confirmation-container');
+
+            // Sample order data - in a real app, fetch from backend
+            const orderData = {
+                id: orderId,
+                date: formatDate(new Date().toISOString()),
+                status: 'Processing',
+                items: [
+                    { id: 1, title: 'Book #1', author: 'Author Name', quantity: 1, price: 12.99 },
+                    { id: 2, title: 'Book #2', author: 'Another Author', quantity: 2, price: 14.99 },
+                    { id: 3, title: 'Book #3', author: 'Third Author', quantity: 1, price: 11.99 }
+                ],
+                subtotal: 54.96,
+                tax: 5.496,
+                shipping: 5.00,
+                total: 65.456,
+                tracking: 'TRK001234569',
+                shippingAddress: {
+                    name: 'John Doe',
+                    email: 'john@example.com',
+                    phone: '+1-800-555-0100',
+                    address: '123 Main Street',
+                    city: 'New York',
+                    state: 'NY',
+                    zip: '10001'
+                }
+            };
+
+            container.innerHTML = `
+                <!-- Order Summary -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h3 class="card-title">Order #${orderData.id}</h3>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                        <div>
+                            <p style="color: var(--dark-gray); margin-bottom: 0.3rem;">Order Date</p>
+                            <p style="font-weight: bold;">${orderData.date}</p>
+                        </div>
+                        <div>
+                            <p style="color: var(--dark-gray); margin-bottom: 0.3rem;">Status</p>
+                            <p style="font-weight: bold; color: var(--secondary-color); background-color: rgba(52, 152, 219, 0.1); padding: 0.3rem 0.8rem; border-radius: 4px; display: inline-block;">
+                                ${orderData.status}
+                            </p>
+                        </div>
+                        <div>
+                            <p style="color: var(--dark-gray); margin-bottom: 0.3rem;">Tracking Number</p>
+                            <p style="font-weight: bold; font-family: monospace;">${orderData.tracking}</p>
+                        </div>
+                        <div>
+                            <p style="color: var(--dark-gray); margin-bottom: 0.3rem;">Order Total</p>
+                            <p style="font-weight: bold; font-size: 1.1rem; color: var(--secondary-color);">${formatCurrency(orderData.total)}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h3 class="card-title">Order Items</h3>
+                    <div style="margin-bottom: 1.5rem;">
+                        ${orderData.items.map((item, index) => `
+                            <div style="padding: 1rem; border: 1px solid var(--light-gray); border-radius: 4px; margin-bottom: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                    <div>
+                                        <h4 style="margin-bottom: 0.3rem;">${item.title}</h4>
+                                        <p style="font-size: 0.9rem; color: var(--dark-gray);">by ${item.author}</p>
+                                        <p style="font-size: 0.9rem; color: var(--dark-gray); margin-top: 0.3rem;">Quantity: ${item.quantity}</p>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <p style="font-weight: bold; font-size: 1rem;">${formatCurrency(item.price * item.quantity)}</p>
+                                        <p style="font-size: 0.9rem; color: var(--dark-gray);">${formatCurrency(item.price)} per unit</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Order Totals -->
+                    <div style="border-top: 1px solid var(--light-gray); padding-top: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Subtotal:</span>
+                            <strong>${formatCurrency(orderData.subtotal)}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Tax (10%):</span>
+                            <strong>${formatCurrency(orderData.tax)}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                            <span>Shipping:</span>
+                            <strong>${formatCurrency(orderData.shipping)}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding-top: 1rem; border-top: 1px solid var(--light-gray); font-size: 1.2rem; font-weight: bold;">
+                            <span>Order Total:</span>
+                            <span style="color: var(--secondary-color);">${formatCurrency(orderData.total)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipping Information -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h3 class="card-title">Shipping Information</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <div>
+                            <h4 style="margin-bottom: 1rem;">Recipient</h4>
+                            <p><strong>${orderData.shippingAddress.name}</strong></p>
+                            <p style="color: var(--dark-gray);">${orderData.shippingAddress.email}</p>
+                            <p style="color: var(--dark-gray);">${orderData.shippingAddress.phone}</p>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom: 1rem;">Delivery Address</h4>
+                            <p>${orderData.shippingAddress.address}</p>
+                            <p>${orderData.shippingAddress.city}, ${orderData.shippingAddress.state} ${orderData.shippingAddress.zip}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- What's Next -->
+                <div class="card" style="background-color: var(--light-gray); border-left: 4px solid var(--secondary-color); margin-bottom: 2rem;">
+                    <h3 class="card-title">What Happens Next?</h3>
+                    <ol style="margin-left: 1.5rem; color: var(--dark-gray);">
+                        <li style="margin-bottom: 0.5rem;">We'll process your order within 24 hours</li>
+                        <li style="margin-bottom: 0.5rem;">You'll receive a shipping confirmation email</li>
+                        <li style="margin-bottom: 0.5rem;">Track your package using tracking number: <strong>${orderData.tracking}</strong></li>
+                        <li>Books will arrive within 5-7 business days</li>
+                    </ol>
+                </div>
+
+                <!-- Email Confirmation -->
+                <div class="card" style="border: 1px dashed var(--secondary-color);">
+                    <p style="margin: 0; color: var(--dark-gray);">
+                        📧 A confirmation email has been sent to <strong>${orderData.shippingAddress.email}</strong>
+                    </p>
+                    <p style="margin-top: 0.5rem; margin-bottom: 0; font-size: 0.9rem; color: var(--dark-gray);">
+                        You can also check your order status at any time in the "Orders" section
+                    </p>
+                </div>
+            `;
+        }
+
+        function logout() {
+            clearCurrentCustomer();
+            showAlert('Logged out successfully', 'success');
+            setTimeout(() => window.location.href = 'register.html', 1000);
+        }
+
+        loadOrderConfirmation();
+    </script>
+</body>
+
+</html>

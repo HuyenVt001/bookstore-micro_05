@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
 from .models import Book
 from .serializers import BookSerializer
 
@@ -15,6 +16,34 @@ class BookListCreate(APIView):
 
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class BookDetail(APIView):
+    def get(self, request, book_id):
+        try:
+            book = Book.objects.get(id=book_id)
+            serializer = BookSerializer(book)
+            return Response(serializer.data)
+        except Book.DoesNotExist:
+            return Response({'error': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, book_id):
+        try:
+            book = Book.objects.get(id=book_id)
+            serializer = BookSerializer(book, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Book.DoesNotExist:
+            return Response({'error': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, book_id):
+        try:
+            book = Book.objects.get(id=book_id)
+            book.delete()
+            return Response({'message': 'Book deleted'}, status=status.HTTP_204_NO_CONTENT)
+        except Book.DoesNotExist:
+            return Response({'error': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)

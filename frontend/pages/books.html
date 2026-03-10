@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books - BookStore</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">📚 BookStore</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="books.html">Books</a></li>
+                <li><a href="cart.html">Cart</a></li>
+                <li><a href="orders.html">Orders</a></li>
+            </ul>
+            <div class="user-section">
+                <span id="user-display">Guest</span>
+                <div class="cart-badge" id="cart-count" style="display: none;">0</div>
+                <button class="btn btn-primary btn-small" id="login-btn"
+                    onclick="window.location.href='register.html'">Login/Register</button>
+                <button class="btn btn-danger btn-small" id="logout-btn" style="display: none;"
+                    onclick="logout()">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <div id="alert-container"></div>
+
+    <div class="container">
+        <div class="section-title">Browse Books</div>
+
+        <div style="display: grid; grid-template-columns: 250px 1fr; gap: 2rem; margin-bottom: 2rem;">
+            <div>
+                <div class="sidebar">
+                    <div class="sidebar-title">Filters</div>
+                    <div class="form-group">
+                        <label>Price Range</label>
+                        <input type="range" id="price-filter" min="0" max="100" value="100" style="width: 100%;">
+                        <small style="color: var(--dark-gray);">Max: <span id="price-value">$100</span></small>
+                    </div>
+                    <div class="form-group">
+                        <label>Search</label>
+                        <input type="text" id="search-input" placeholder="Search books...">
+                    </div>
+                    <button class="btn btn-primary" onclick="filterBooks()" style="width: 100%;">Apply Filters</button>
+                </div>
+            </div>
+
+            <div>
+                <div style="margin-bottom: 1.5rem;">
+                    <p>Showing <strong id="book-count">0</strong> books</p>
+                </div>
+                <div id="books-container" class="book-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>About Us</h4>
+                <p>BookStore is your online destination for finding and purchasing books.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <a href="index.html">Home</a>
+                <a href="books.html">Books</a>
+                <a href="cart.html">Cart</a>
+                <a href="orders.html">Orders</a>
+            </div>
+            <div class="footer-section">
+                <h4>Customer Service</h4>
+                <a href="#">Contact Us</a>
+                <a href="#">FAQs</a>
+                <a href="#">Shipping Info</a>
+                <a href="#">Returns</a>
+            </div>
+            <div class="footer-section">
+                <h4>Follow Us</h4>
+                <a href="#">Facebook</a>
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 BookStore. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        let allBooks = [];
+
+        async function loadBooks() {
+            try {
+                allBooks = await getAllBooks();
+                displayBooks(allBooks);
+            } catch (error) {
+                showAlert('Failed to load books', 'danger');
+            }
+        }
+
+        function displayBooks(books) {
+            const container = document.getElementById('books-container');
+            const count = document.getElementById('book-count');
+
+            container.innerHTML = '';
+            count.textContent = books.length;
+
+            if (books.length === 0) {
+                container.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No books found</p>';
+                return;
+            }
+
+            books.forEach(book => {
+                container.innerHTML += `
+                    <div class="book-card">
+                        <div class="book-cover">📕</div>
+                        <div class="book-info">
+                            <p class="book-title">${book.title}</p>
+                            <p class="book-author">by ${book.author}</p>
+                            <p class="book-price">${formatCurrency(book.price)}</p>
+                            <p class="book-stock">Stock: ${book.stock}</p>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="book-detail.html?id=${book.id}" class="btn btn-secondary btn-small" style="flex: 1;">Details</a>
+                                <button class="btn btn-success btn-small" onclick="quickAddToCart(${book.id}, '${book.title}', ${book.price})" style="flex: 1;">Add Cart</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterBooks() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const maxPrice = parseFloat(document.getElementById('price-filter').value);
+
+            const filtered = allBooks.filter(book => {
+                const matchesSearch = book.title.toLowerCase().includes(searchTerm) ||
+                    book.author.toLowerCase().includes(searchTerm);
+                const matchesPrice = book.price <= maxPrice;
+                return matchesSearch && matchesPrice;
+            });
+
+            displayBooks(filtered);
+        }
+
+        async function quickAddToCart(bookId, title, price) {
+            const customerId = getCurrentCustomerId();
+            if (!customerId) {
+                showAlert('Please login first', 'info');
+                window.location.href = 'register.html';
+                return;
+            }
+
+            try {
+                await addToCart(customerId, bookId, 1, price);
+                showAlert(`"${title}" added to cart!`, 'success');
+                updateCartCounter();
+            } catch (error) {
+                showAlert('Failed to add to cart', 'danger');
+            }
+        }
+
+        function logout() {
+            clearCurrentCustomer();
+            showAlert('Logged out successfully', 'success');
+            setTimeout(() => window.location.href = 'register.html', 1000);
+        }
+
+        // Filter event listeners
+        document.getElementById('price-filter').addEventListener('input', (e) => {
+            document.getElementById('price-value').textContent = '$' + e.target.value;
+        });
+
+        document.getElementById('search-input').addEventListener('keyup', filterBooks);
+
+        loadBooks();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookStore - Home</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">📚 BookStore</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="books.html">Books</a></li>
+                <li><a href="cart.html">Cart</a></li>
+                <li><a href="orders.html">Orders</a></li>
+            </ul>
+            <div class="user-section">
+                <span id="user-display">Guest</span>
+                <div class="cart-badge" id="cart-count" style="display: none;">0</div>
+                <button class="btn btn-primary btn-small" id="login-btn"
+                    onclick="window.location.href='register.html'">Login/Register</button>
+                <button class="btn btn-danger btn-small" id="logout-btn" style="display: none;"
+                    onclick="logout()">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <div id="alert-container"></div>
+
+    <div class="container">
+        <div class="section-title">Welcome to BookStore</div>
+
+        <div style="text-align: center; margin: 2rem 0;">
+            <p style="font-size: 1.1rem; margin-bottom: 1rem;">
+                Discover your next favorite book from our extensive collection
+            </p>
+            <a href="books.html" class="btn btn-primary">Browse Books</a>
+        </div>
+
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin: 3rem 0;">
+            <div class="card">
+                <h3 class="card-title">📖 Huge Collection</h3>
+                <p class="card-text">Explore thousands of books from different genres and authors.</p>
+            </div>
+            <div class="card">
+                <h3 class="card-title">🛒 Easy Checkout</h3>
+                <p class="card-text">Simple and secure shopping cart with quick checkout process.</p>
+            </div>
+            <div class="card">
+                <h3 class="card-title">⭐ Reader Reviews</h3>
+                <p class="card-text">Read and write book reviews to help other readers choose.</p>
+            </div>
+            <div class="card">
+                <h3 class="card-title">🚚 Fast Shipping</h3>
+                <p class="card-text">Track your orders and get updates on your deliveries.</p>
+            </div>
+        </div>
+
+        <div class="section-title">Featured Books</div>
+        <div id="featured-books" class="book-grid" style="margin-bottom: 2rem;"></div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>About Us</h4>
+                <p>BookStore is your online destination for finding and purchasing books.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <a href="index.html">Home</a>
+                <a href="books.html">Books</a>
+                <a href="cart.html">Cart</a>
+                <a href="orders.html">Orders</a>
+            </div>
+            <div class="footer-section">
+                <h4>Customer Service</h4>
+                <a href="#">Contact Us</a>
+                <a href="#">FAQs</a>
+                <a href="#">Shipping Info</a>
+                <a href="#">Returns</a>
+            </div>
+            <div class="footer-section">
+                <h4>Follow Us</h4>
+                <a href="#">Facebook</a>
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 BookStore. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        async function loadFeaturedBooks() {
+            try {
+                const books = await getAllBooks();
+                const container = document.getElementById('featured-books');
+                container.innerHTML = '';
+
+                books.slice(0, 4).forEach(book => {
+                    container.innerHTML += `
+                        <div class="book-card">
+                            <div class="book-cover">📕</div>
+                            <div class="book-info">
+                                <p class="book-title">${book.title}</p>
+                                <p class="book-author">by ${book.author}</p>
+                                <p class="book-price">${formatCurrency(book.price)}</p>
+                                <p class="book-stock">Stock: ${book.stock}</p>
+                                <a href="book-detail.html?id=${book.id}" class="btn btn-primary btn-small" style="width: 100%;">View Details</a>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                showAlert('Failed to load featured books', 'danger');
+            }
+        }
+
+        function logout() {
+            clearCurrentCustomer();
+            showAlert('Logged out successfully', 'success');
+            setTimeout(() => window.location.href = 'register.html', 1000);
+        }
+
+        loadFeaturedBooks();
+    </script>
+</body>
+
+</html>
